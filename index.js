@@ -19,6 +19,7 @@ async function run() {
     try {
         await client.connect();
         const productCollection = client.db("productManufacturer").collection("product");
+        const orderCollection = client.db("productManufacturer").collection("order");
 
 
         // Every Products 
@@ -35,6 +36,68 @@ async function run() {
             const product = await productCollection.findOne(query);
             res.send(product)
         })
+
+        // Delete Product
+        app.delete('/product/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await productCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        // Post a Product 
+        app.post('/product', async (req, res) => {
+            const product = req.body;
+            const result = await productCollection.insertOne(product)
+            res.send(result)
+        })
+
+        // Every Orders 
+        app.post('/orders', async (req, res) => {
+            const product = req.body;
+            const result = await orderCollection.insertOne(product)
+            res.send(result)
+        })
+
+        app.get('/orders', async (req, res) => {
+            const query = {}
+            const cursor = orderCollection.find(query)
+            const products = await cursor.toArray();
+            res.send(products);
+        })
+
+
+
+        // Indivitual Email All Orders 
+        app.get('/myorders', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email }
+            const cursor = orderCollection.find(query)
+            const myProducts = await cursor.toArray();
+            res.send(myProducts)
+        })
+
+        // Indivitual Email Single Order
+
+        app.get('/myorders/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const product = await orderCollection.findOne(query);
+            res.send(product)
+        })
+
+
+        // Delete an Order
+        app.delete('/myorders/:id', async (req, res) => {
+            // const email = req.query.email;
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            // const query = { email: email };
+            const result = await orderCollection.deleteOne(query);
+            res.send(result);
+        })
+
+
 
     } finally {
     }
