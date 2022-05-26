@@ -5,6 +5,8 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const port = process.env.PORT || 4000;
 const jwt = require('jsonwebtoken');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+
 
 app.use(cors())
 app.use(express.json())
@@ -37,7 +39,37 @@ async function run() {
         const orderCollection = client.db("productManufacturer").collection("order");
         const reviewCollection = client.db("productManufacturer").collection("review");
         const userCollection = client.db("productManufacturer").collection("user");
+        const paymentCollection = client.db("productManufacturer").collection("payment");
 
+
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+            const order = req.body;
+            const price = order.totalPrice;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({ clientSecret: paymentIntent.client_secret })
+        });
+
+        app.patch('/orders/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId,
+                    status: "pending"
+                }
+            }
+
+            const result = await paymentCollection.insertOne(payment);
+            const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
+            res.send(updatedOrder);
+        })
 
         const verifyAdmin = async (req, res, next) => {
             const requester = req.decoded.email;
@@ -129,6 +161,29 @@ async function run() {
             const cursor = orderCollection.find(query)
             const products = await cursor.toArray();
             res.send(products);
+        })
+        app.get('/orders/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const product = await orderCollection.findOne(query);
+            res.send(product);
+        })
+
+
+        app.put('/orders/:id', async (req, res) => {
+            const id = req.params.id;
+            // const updatedStatus = req.body.status;
+            // console.log(updatedStatus)
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    status: "shipped"
+                }
+            }
+            const result = await orderCollection.updateOne(filter, updatedDoc, options)
+            res.send(result)
+            console.log(result)
         })
 
 
