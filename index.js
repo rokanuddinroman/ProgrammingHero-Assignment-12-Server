@@ -85,6 +85,7 @@ async function run() {
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
+            console.log(user)
             const filter = { email: email };
             const options = { upsert: true };
             const updateDoc = {
@@ -128,6 +129,13 @@ async function run() {
             const query = { email: email };
             const result = await userCollection.deleteOne(query);
             res.send(result);
+        })
+
+        app.get('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            res.send(user)
         })
 
         // Every Products 
@@ -183,8 +191,8 @@ async function run() {
 
         app.put('/orders/:id', async (req, res) => {
             const id = req.params.id;
-            // const updatedStatus = req.body.status;
-            // console.log(updatedStatus)
+            const user = req.body;
+            console.log(user)
             const filter = { _id: ObjectId(id) };
             const options = { upsert: true };
             const updatedDoc = {
@@ -197,6 +205,20 @@ async function run() {
             console.log(result)
         })
 
+
+
+        // app.put('/user/:id', async (req, res) => {
+        //     const email = req.params.email;
+        //     const user = req.body;
+        //     const filter = { email: email };
+        //     const options = { upsert: true };
+        //     const updateDoc = {
+        //         $set: user,
+        //     };
+        //     const result = await userCollection.updateOne(filter, updateDoc, options);
+        //     const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30d' })
+        //     res.send({ result, token });
+        // });
 
 
         // Indivitual Email All Orders 
