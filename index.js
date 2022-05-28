@@ -122,10 +122,6 @@ async function run() {
 
         app.delete('/user/:email', async (req, res) => {
             const email = req.params.email;
-            // const data=req.body
-            // console.log(data)
-            // const id = req.params.id;
-            // const query = { _id: ObjectId(id) };
             const query = { email: email };
             const result = await userCollection.deleteOne(query);
             res.send(result);
